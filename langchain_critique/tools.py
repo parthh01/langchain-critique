@@ -61,11 +61,14 @@ class CritiqueSearchTool(BaseTool):
 
     Setup:
         Install ``langchain-critique`` and set environment variable ``CRITIQUE_API_KEY``.
+        Get your API key at https://critiquebrowser.app/en/flow-api?view=keys
 
         .. code-block:: bash
 
             pip install -U langchain-critique
             export CRITIQUE_API_KEY="your-api-key"
+
+    For detailed API documentation, visit: https://critiquebrowser.app/en/flow-api?view=usage
 
     Key init args:
         api_key: str
@@ -216,11 +219,14 @@ class CritiqueAPIDesignTool(BaseTool):
 
     Setup:
         Install ``langchain-critique`` and set environment variable ``CRITIQUE_API_KEY``.
+        Get your API key at https://critiquebrowser.app/en/flow-api?view=keys
 
         .. code-block:: bash
 
             pip install -U langchain-critique
             export CRITIQUE_API_KEY="your-api-key"
+
+    For detailed API documentation, visit: https://critiquebrowser.app/en/flow-api?view=usage
 
     Key init args:
         api_key: str
