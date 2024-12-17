@@ -1,27 +1,92 @@
 from typing import Type
+import os
+import pytest
 
-from langchain_critique.tools import CritiqueTool
+from langchain_critique.tools import CritiqueSearchTool, CritiqueAPIDesignTool
 from langchain_tests.integration_tests import ToolsIntegrationTests
 
 
-class TestParrotMultiplyToolIntegration(ToolsIntegrationTests):
+@pytest.mark.skipif(
+    "CRITIQUE_API_KEY" not in os.environ,
+    reason="Critique API key not found in environment"
+)
+class TestCritiqueSearchToolIntegration(ToolsIntegrationTests):
     @property
-    def tool_constructor(self) -> Type[CritiqueTool]:
-        return CritiqueTool
+    def tool_constructor(self) -> Type[CritiqueSearchTool]:
+        return CritiqueSearchTool
 
     @property
     def tool_constructor_params(self) -> dict:
-        # if your tool constructor instead required initialization arguments like
-        # `def __init__(self, some_arg: int):`, you would return those here
-        # as a dictionary, e.g.: `return {'some_arg': 42}`
-        return {}
+        return {}  # Will use env var
 
     @property
     def tool_invoke_params_example(self) -> dict:
-        """
-        Returns a dictionary representing the "args" of an example tool call.
+        return {
+            "prompt": "What are the latest developments in AI?",
+            "source_blacklist": ["unreliable-news.com"],
+            "output_format": {"key_points": ["string"]}
+        }
 
-        This should NOT be a ToolCall dict - i.e. it should not
-        have {"name", "id", "args"} keys.
-        """
-        return {"a": 2, "b": 3}
+    def test_image_search(self):
+        tool = self.tool_constructor(**self.tool_constructor_params)
+        result = tool.invoke({
+            "prompt": "What is this building?",
+            "image": "https://example.com/test-image.jpg",
+            "output_format": {
+                "building_info": {
+                    "name": "string",
+                    "location": "string",
+                    "year_built": "number"
+                }
+            }
+        })
+        assert "response" in result
+        assert "citations" in result
+
+
+@pytest.mark.skipif(
+    "CRITIQUE_API_KEY" not in os.environ,
+    reason="Critique API key not found in environment"
+)
+class TestCritiqueAPIDesignToolIntegration(ToolsIntegrationTests):
+    @property
+    def tool_constructor(self) -> Type[CritiqueAPIDesignTool]:
+        return CritiqueAPIDesignTool
+
+    @property
+    def tool_constructor_params(self) -> dict:
+        return {}  # Will use env var
+
+    @property
+    def tool_invoke_params_example(self) -> dict:
+        return {
+            "operation": "create",
+            "prompt": "Create an API that takes a company name and returns their ESG score"
+        }
+
+    def test_api_lifecycle(self):
+        tool = self.tool_constructor(**self.tool_constructor_params)
+        
+        # Create API
+        create_result = tool.invoke({
+            "operation": "create",
+            "prompt": "Create an API that takes a company name and returns their ESG score"
+        })
+        api_id = create_result["id"]
+        
+        # Update API
+        update_result = tool.invoke({
+            "operation": "update",
+            "api_id": api_id,
+            "prompt": "Add carbon footprint metrics to the response"
+        })
+        
+        # List APIs
+        list_result = tool.invoke({"operation": "list"})
+        assert any(api["id"] == api_id for api in list_result)
+        
+        # Delete API
+        delete_result = tool.invoke({
+            "operation": "delete",
+            "api_id": api_id
+        })
